@@ -1,14 +1,12 @@
 final float NO_HIT= Float.POSITIVE_INFINITY;
 Vec lightPos = new Vec(2, 10, 15);
-float lightPower = 5000;
-
-Vec lightPos2 = new Vec(-10, -10, 10);
-float lightPower2 = 5000;
-
+Spectrum lightPower = new Spectrum(4000, 4000, 4000);
 
 Vec eye = new Vec(0, 0, 5);           
 Vec sphereCenter = new Vec(0, 0, 0);  
 float sphereRadius = 1;                
+
+Spectrum diffuseColor = new Spectrum(1, 0.5, 0.25);
 
 void setup() {
   size(256, 256);
@@ -48,15 +46,8 @@ color calcPixelColor(int x, int y) {
   
   Vec n = p.sub(sphereCenter).normalize();
   
-  float brightness = diffuseLighting(p, n, lightPos, lightPower);
-  float brightness2 = diffuseLighting(p, n, lightPos2, lightPower2);
-  
-  int i = min(int(brightness * 255), 255);
-  int i2 = min(int(brightness2 * 255), 255);
-  
-  int max = max(i, i2);
-  
-  return color(max, max, max);
+  Spectrum l = diffuseLighting(p, n, diffuseColor, lightPos, lightPower);
+  return l.toColor();
 }
 
 float intersectRaySphere(Vec rayOrigin, Vec rayDir, 
@@ -78,16 +69,16 @@ float intersectRaySphere(Vec rayOrigin, Vec rayDir,
   return NO_HIT;
 }
 
-float diffuseLighting(Vec p, Vec n, Vec lightPos, float lightPower) {
+Spectrum diffuseLighting(Vec p, Vec n, Spectrum diffuseColor,
+                         Vec lightPos, Spectrum lightPower) {
   Vec v = lightPos.sub(p);
   Vec l = v.normalize();
-  
   float dot = n.dot(l);
-  
-  if(dot > 0){
+  if (dot > 0) {
     float r = v.len();
-    return lightPower * dot / (4* PI * r *r);
-  }else {
-    return 0;
+    float factor = dot / (4 * PI * r * r);
+    return lightPower.scale(factor).mul(diffuseColor);
+  } else {
+    return BLACK;
   }
 }
