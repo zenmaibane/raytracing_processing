@@ -1,14 +1,14 @@
 final float NO_HIT= Float.POSITIVE_INFINITY;
-Vec lightPos = new Vec(10, 10, 10);
-float lightPower = 4000;
+Vec lightPos = new Vec(2, 10, 15);
+float lightPower = 5000;
+
+Vec lightPos2 = new Vec(-10, -10, 10);
+float lightPower2 = 5000;
+
 
 Vec eye = new Vec(0, 0, 5);           
 Vec sphereCenter = new Vec(0, 0, 0);  
-float sphereRadius = 1;               
-
-Vec lightPos = new Vec(10, 10, 10);   
-float lightPower = 4000;              
-
+float sphereRadius = 1;                
 
 void setup() {
   size(256, 256);
@@ -49,9 +49,14 @@ color calcPixelColor(int x, int y) {
   Vec n = p.sub(sphereCenter).normalize();
   
   float brightness = diffuseLighting(p, n, lightPos, lightPower);
+  float brightness2 = diffuseLighting(p, n, lightPos2, lightPower2);
   
   int i = min(int(brightness * 255), 255);
-  return color(i, i, i);
+  int i2 = min(int(brightness2 * 255), 255);
+  
+  int max = max(i, i2);
+  
+  return color(max, max, max);
 }
 
 float intersectRaySphere(Vec rayOrigin, Vec rayDir, 
@@ -83,5 +88,6 @@ float diffuseLighting(Vec p, Vec n, Vec lightPos, float lightPower) {
     float r = v.len();
     return lightPower * dot / (4* PI * r *r);
   }else {
+    return 0;
   }
 }
