@@ -1,5 +1,6 @@
+
 Scene scene = new Scene(); 
-Vec eye = new Vec(0, 0, 7); 
+Vec eye = new Vec(0, 0, 4); 
 
 void setup() {
   size(256, 256);
@@ -22,36 +23,29 @@ void draw() {
 
 
 void initScene() {
+  Material mtlSphere = new Material(new Spectrum(0.9, 0.1, 0.5));
+  mtlSphere.reflective = 0.6;
   scene.addIntersectable(new Sphere(
-    new Vec(-2, 0, 0), 
-    0.8, 
-    new Material(new Spectrum(0.9, 0.1, 0.5)) 
-  ));
-  scene.addIntersectable(new Sphere(
-    new Vec(0, 0, 0), 
-    0.8, 
-    new Material(new Spectrum(0.1, 0.9, 0.5))
-    ));
-  scene.addIntersectable(new Sphere(
-    new Vec(2, 0, 0), 
-    0.8, 
-    new Material(new Spectrum(0.1, 0.5, 0.9))
+    new Vec(0, 0, 0),
+    1,
+    mtlSphere
   ));
 
-  scene.addIntersectable(new Plane(
-    new Vec(0, -0.8, 0), 
-    new Vec(0, 1, 0), 
-    new Material(new Spectrum(0.8, 0.8, 0.8)) 
+  Material mtlFloor1 = new Material(new Spectrum(0.5, 0.5, 0.5));
+  Material mtlFloor2 = new Material(new Spectrum(0.2, 0.2, 0.2));
+  scene.addIntersectable(new CheckedObj(
+    new Plane(
+      new Vec(0, -1, 0),
+      new Vec(0, 1, 0), 
+      mtlFloor1
+    ),
+    1,
+    mtlFloor2 
   ));
 
-  scene.addLight(new Light(
-    new Vec(100, 100, 100), 
-    new Spectrum(400000, 100000, 400000) 
-  ));
-
-  scene.addLight(new Light(
-    new Vec(-100, 100, 100), 
-    new Spectrum(100000, 400000, 100000)
+   scene.addLight(new Light(
+    new Vec(100, 100, 100), // 位置
+    new Spectrum(800000, 800000, 800000)
   ));
 }
 
@@ -70,6 +64,6 @@ Ray calcPrimaryRay(int x, int y) {
 
 color calcPixelColor(int x, int y) {
   Ray ray = calcPrimaryRay(x, y);
-  Spectrum l = scene.trace(ray);
+  Spectrum l = scene.trace(ray, 0);
   return l.toColor();
 }

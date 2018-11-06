@@ -43,4 +43,8 @@ class Vec {
   String toString() {
     return "Vec(" + this.x + ", " + this.y + ", " + this.z + ")";
   }
+  
+  Vec reflect(Vec n) {
+    return this.sub(n.scale(2 * this.dot(n)));
+  }
 }
