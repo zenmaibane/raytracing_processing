@@ -1,9 +1,12 @@
 final int DEPTH_MAX = 10;
+final float VACUUM_REFRACTIVE_INDEX = 1.0;
+
 class Scene {
   ArrayList<Intersectable> objList = new ArrayList<Intersectable>();
   ArrayList<Light> lightList = new ArrayList<Light>();
 
-  Scene() {}
+  Scene() {
+  }
 
   void addIntersectable(Intersectable obj) {
     this.objList.add(obj);
@@ -14,26 +17,42 @@ class Scene {
   }
 
   Spectrum trace(Ray ray, int depth) {
-    if (DEPTH_MAX < depth) { return BLACK; }
+    if (DEPTH_MAX < depth) { 
+      return BLACK;
+    }
     Intersection isect = findNearestIntersection(ray);
-    if (!isect.hit()) { return BLACK; }
-    
+    if (!isect.hit()) { 
+      return BLACK;
+    }
+
     Material m = isect.material;
     Spectrum l = BLACK;
-    
-    float ks = m.reflective;
-    
-    if(0 < ks){
-      Vec r = ray.dir.reflect(isect.n);
-      Spectrum c = trace(new Ray(isect.p, r), depth + 1);
-      l = l.add(c.scale(ks).mul(m.diffuse)); 
-    }
-    
-    float kd = 1.0 - ks;
-    if (0 < kd) {
-      Spectrum c = this.lighting(isect.p, isect.n, isect.material);
-      l = l.add(c.scale(kd));
-    }
+
+    if (isect.n.dot(ray.dir) < 0) {
+      float ks = m.reflective;
+
+      if (0 < ks) {
+        Vec r = ray.dir.reflect(isect.n);
+        Spectrum c = trace(new Ray(isect.p, r), depth + 1);
+        l = l.add(c.scale(ks).mul(m.diffuse));
+      }
+
+      float kt = m.refractive;
+      if (0 < kt) {
+        Vec r = ray.dir.refract(isect.n, VACUUM_REFRACTIVE_INDEX / m.refractiveIndex);
+        Spectrum c = trace(new Ray(isect.p, r), depth + 1);
+        l = l.add(c.scale(kt).mul(m.diffuse));
+      }
+
+      float kd = 1.0 - ks -kt;
+      if (0 < kd) {
+        Spectrum c = this.lighting(isect.p, isect.n, isect.material);
+        l = l.add(c.scale(kd));
+      } 
+    }else {
+        Vec r = ray.dir.refract(isect.n.neg(), m.refractiveIndex / VACUUM_REFRACTIVE_INDEX);
+        l = trace(new Ray(isect.p, r), depth + 1);
+      }
 
     return l;
   }
@@ -43,7 +62,9 @@ class Scene {
     for (int i = 0; i < this.objList.size(); i ++) {
       Intersectable obj = this.objList.get(i);
       Intersection tisect = obj.intersect(ray);
-      if ( tisect.t < isect.t ) { isect = tisect; }
+      if ( tisect.t < isect.t ) { 
+        isect = tisect;
+      }
     }
     return isect;
   }
@@ -58,29 +79,29 @@ class Scene {
     return L;
   }
 
-  Spectrum diffuseLighting(Vec p, Vec n, Spectrum diffuseColor,
-                          Vec lightPos, Spectrum lightPower) {
+  Spectrum diffuseLighting(Vec p, Vec n, Spectrum diffuseColor, 
+    Vec lightPos, Spectrum lightPower) {
     Vec v = lightPos.sub(p);
     Vec l = v.normalize();
     float dot = n.dot(l);
-    if (dot > 0){
-      if (visible(p, lightPos)){
+    if (dot > 0) {
+      if (visible(p, lightPos)) {
         float r = v.len();
         float factor = dot /(4 * PI * r * r);
         return lightPower.scale(factor).mul(diffuseColor);
       }
     }
-    
+
     return BLACK;
   }
-  
-  boolean visible(Vec org, Vec target){
+
+  boolean visible(Vec org, Vec target) {
     Vec v = target.sub(org).normalize();
     Ray shadowRay = new Ray(org, v);
-    
-    for(int i = 0; i < this.objList.size(); i++){
+
+    for (int i = 0; i < this.objList.size(); i++) {
       Intersectable obj = this.objList.get(i);
-      if(obj.intersect(shadowRay).t < v.len()){
+      if (obj.intersect(shadowRay).t < v.len()) {
         return false;
       }
     }
